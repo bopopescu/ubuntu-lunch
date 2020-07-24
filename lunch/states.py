@@ -19,13 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
-Constants for the states of the slave processes
+Constants for the states of the subordinate processes
 """
 STATE_STARTING = "STARTING"
 STATE_RUNNING = "RUNNING"
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED"
-STATE_NOSLAVE = "NOSLAVE" # for master only
+STATE_NOSLAVE = "NOSLAVE" # for main only
 # these two are not states per se, but returned by the get_state_info() method
 INFO_DONE = "DONE"
 INFO_FAILED = "FAILED"

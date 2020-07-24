@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 """
-This example demonstrate how to use lunch master as a library.
+This example demonstrate how to use lunch main as a library.
 """
 from twisted.internet import gtk2reactor
 gtk2reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import task
 from lunch import commands
-from lunch import master
+from lunch import main
 from lunch import gui
 
 has_them = False
 counter = 0
 
 if __name__ == "__main__":
-    unique_master_id = "example"
-    log_dir = master.DEFAULT_LOG_DIR
+    unique_main_id = "example"
+    log_dir = main.DEFAULT_LOG_DIR
     
-    master.start_logging()
-    pid_file = master.write_master_pid_file(identifier=unique_master_id, directory=log_dir)
-    m = master.Master(log_dir=log_dir, pid_file=pid_file, verbose=True)
+    main.start_logging()
+    pid_file = main.write_main_pid_file(identifier=unique_main_id, directory=log_dir)
+    m = main.Main(log_dir=log_dir, pid_file=pid_file, verbose=True)
 
     m.add_command(commands.Command("xeyes", identifier="xeyes"))
     m.add_command(commands.Command("xlogo", identifier="xlogo"))

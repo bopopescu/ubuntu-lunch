@@ -1,11 +1,11 @@
 """
-Tests for lunch Master
+Tests for lunch Main
 """
 from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import failure
 from twisted.internet import reactor
-from lunch import master
+from lunch import main
 from lunch import commands
 from lunch.states import *
 
@@ -13,13 +13,13 @@ LOG_LEVEL = "warning"
 #LOG_LEVEL = "info"
 #LOG_LEVEL = "debug"
 
-master.start_stdout_logging(LOG_LEVEL)
+main.start_stdout_logging(LOG_LEVEL)
 from lunch import logger
 log = logger.start(name="test")
 
-#TODO: add the path to lunch-slave to $PATH
+#TODO: add the path to lunch-subordinate to $PATH
 
-class Test_Master(unittest.TestCase):
+class Test_Main(unittest.TestCase):
     timeout = 4.0 # so that we don't wait in case of a problem
     def test_read_config(self):
         pass
@@ -29,48 +29,48 @@ class Test_Master(unittest.TestCase):
         COMMAND_IDENTIFER = "test"
         COMMAND_LINE = "man man"
         _deferred = defer.Deferred()
-        _master = master.Master()
+        _main = main.Main()
         self.the_command = None
         
         def _later1():
             # checks the the command has been added
             # removes the command
-            self.the_command = _master.get_command(COMMAND_IDENTIFER)
+            self.the_command = _main.get_command(COMMAND_IDENTIFER)
             log.info("Set self.the_command to %s" % (self.the_command))
-            _master.remove_command(COMMAND_IDENTIFER)
+            _main.remove_command(COMMAND_IDENTIFER)
             log.info("remove_command")
             reactor.callLater(0.1, _later2)
         
         def _later2():
             log.info("_later2")
             # checks the the command has been removed
-            if len(_master.get_all_commands()) != 0:
+            if len(_main.get_all_commands()) != 0:
                 msg = "The command did not get removed"
                 log.info(msg)
                 _deferred.errback(failure.Failure(failure.DefaultException(msg)))
                 log.info("failed")
             else:
                 log.info("removing the looping call")
-                if _master._looping_call.running:
-                    d = _master._looping_call.deferred
-                    _master._looping_call.stop() # FIXME
+                if _main._looping_call.running:
+                    d = _main._looping_call.deferred
+                    _main._looping_call.stop() # FIXME
                     d.addCallback(_cb3)
                 else:
                     _deferred.callback(None)
         
         def _cb3(result):
             # Called when the looping call has been stopped
-            log.info("quit all slaves")
-            for command in _master.get_all_commands():
-                command.quit_slave() #TODO: use the Deferred
-            if self.the_command.slave_state == STATE_RUNNING:
-                self.the_command.quit_slave() #TODO: use the Deferred
+            log.info("quit all subordinates")
+            for command in _main.get_all_commands():
+                command.quit_subordinate() #TODO: use the Deferred
+            if self.the_command.subordinate_state == STATE_RUNNING:
+                self.the_command.quit_subordinate() #TODO: use the Deferred
             reactor.callLater(0.1, _later4)
         
         def _later4():
             _deferred.callback(None)
         
-        _master.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_IDENTIFER))
+        _main.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_IDENTIFER))
         log.info("added command $ %s" % (COMMAND_LINE))
         reactor.callLater(0.1, _later1)
         return _deferred
@@ -93,11 +93,11 @@ class Test_Master(unittest.TestCase):
 
 
 
-class Test_Master_Advanced(unittest.TestCase):
+class Test_Main_Advanced(unittest.TestCase):
     timeout = 4.0 # so that we don't wait in case of a problem
     
     def setUp(self):
-        self._master = master.Master()
+        self._main = main.Main()
         
     def test_add_commands_with_dependencies(self):
         COMMAND_A_IDENTIFIER = "test_A"
@@ -107,13 +107,13 @@ class Test_Master_Advanced(unittest.TestCase):
         DELAY = 0.1        
         self._deferred = defer.Deferred()
 
-        self._master.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_A_IDENTIFIER))
-        self._master.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_B_IDENTIFIER, depends=[COMMAND_A_IDENTIFIER]))
-        self._master.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_C_IDENTIFIER, depends=[COMMAND_B_IDENTIFIER]))
+        self._main.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_A_IDENTIFIER))
+        self._main.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_B_IDENTIFIER, depends=[COMMAND_A_IDENTIFIER]))
+        self._main.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_C_IDENTIFIER, depends=[COMMAND_B_IDENTIFIER]))
         log.info("added commands")
 
         def _cl1():
-            all = self._master.get_all_commands()
+            all = self._main.get_all_commands()
             self.failUnlessEqual(len(all), 3)
             _final_cleanup()
 
@@ -127,8 +127,8 @@ class Test_Master_Advanced(unittest.TestCase):
         def _tear_down():
             # return a deferred list
             log.info("_tear_down")
-            # quit all slaves
-            return self._master.cleanup()
+            # quit all subordinates
+            return self._main.cleanup()
 
         #_final_cleanup()
         _cl1()

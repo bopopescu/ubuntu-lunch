@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
-Main GUI of the Lunch Master 
+Main GUI of the Lunch Main 
 """
 if __name__ == "__main__":
     from twisted.internet import gtk2reactor
@@ -114,13 +114,13 @@ def tail_child_log(command):
     log.info("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
 
-def tail_master_log(master):
-    log_path = master.log_file
+def tail_main_log(main):
+    log_path = main.log_file
     if log_path is None:
-        log.warning("No master log file to tail -F") # TODO: error dialog.
+        log.warning("No main log file to tail -F") # TODO: error dialog.
     else:
         cmd = []
-        xterm_title = "tail -F Lunch Master Log File"
+        xterm_title = "tail -F Lunch Main Log File"
         cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
         cmd.extend(["tail", "-F", log_path])
         log.info("$ %s" % (" ".join(cmd)))
@@ -196,17 +196,17 @@ class About(object):
 
 class LunchApp(object):
     """
-    Simple GTK2 GUI for Lunch Master.
+    Simple GTK2 GUI for Lunch Main.
     
     Defines the main window
     """
     IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
 
-    def __init__(self, lunch_master=None):
+    def __init__(self, lunch_main=None):
         global ICON_FILE
-        self.master = lunch_master
+        self.main = lunch_main
         self.confirm_close = True # should we ask if the user is sure to close the app?
-        _commands = self.master.get_all_commands()
+        _commands = self.main.get_all_commands()
 
         # ------------------------------------------------------
         # Window and its icon
@@ -270,8 +270,8 @@ class LunchApp(object):
         for command in _commands:
             self._add_command_in_tree(command)
 
-        self.master.command_added_signal.connect(self.on_command_added)
-        self.master.command_removed_signal.connect(self.on_command_removed)
+        self.main.command_added_signal.connect(self.on_command_added)
+        self.main.command_removed_signal.connect(self.on_command_removed)
         
         # ------------------------------------------------------
         # TextView for the details
@@ -546,19 +546,19 @@ class LunchApp(object):
 
     def on_menu_open_logs(self, *args):
         #TODO:
-        if hasattr(self.master, "log_dir"):
-            open_path(self.master.log_dir)
+        if hasattr(self.main, "log_dir"):
+            open_path(self.main.log_dir)
         #log.debug("open logs")
 
-    def on_menu_view_master_log(self, *args):
-        tail_master_log(self.master)
+    def on_menu_view_main_log(self, *args):
+        tail_main_log(self.main)
 
     def _create_main_menu(self, window):
         ui_string = """<ui>
           <menubar name='Menubar'>
             <menu action='FileMenu'>
               <menuitem action='OpenLoggingDir'/>
-              <menuitem action='OpenMasterLog'/>
+              <menuitem action='OpenMainLog'/>
               <separator/>
               <menuitem action='Quit'/>
             </menu>
@@ -573,7 +573,7 @@ class LunchApp(object):
         actions = [
             ('FileMenu', None, '_File'),
             ('OpenLoggingDir', None, '_OpenLoggingDir', None, _('Open Logging Directory'), self.on_menu_open_logs),
-            ('OpenMasterLog', None, '_OpenMasterLog', None, _('Open the master log file'), self.on_menu_view_master_log),
+            ('OpenMainLog', None, '_OpenMainLog', None, _('Open the main log file'), self.on_menu_view_main_log),
             ('Quit',     gtk.STOCK_QUIT, '_Quit', '<control>Q', _('Quit'), self.destroy_app),
             ('HelpMenu', None, '_Help'),
             ('About',    gtk.STOCK_ABOUT, '_About', None, _('About the application'), self.on_about),
@@ -615,7 +615,7 @@ class LunchApp(object):
             row = rows # only one row selected at a time in this version
             identifier = model.get_value(row, self.IDENTIFIER_COLUMN)
             # log.debug('id %s' % (identifier))
-            ret = self.master.commands[identifier]
+            ret = self.main.commands[identifier]
         return ret
         
     def on_openlog_clicked(self, widget):
@@ -678,7 +678,7 @@ class LunchApp(object):
         @rettype: bool
         """
         still_some_running = False
-        for c in self.master._get_all():
+        for c in self.main._get_all():
             if c.child_state == STATE_RUNNING:
                 still_some_running = True
         
@@ -698,13 +698,13 @@ class LunchApp(object):
             _cb(True)
             return False
 
-def start_gui(lunch_master):
+def start_gui(lunch_main):
     """
     Starts the GTK GUI
     :rettype: L{LunchApp}
     """
     log.info("Starting the GUI.")
-    app = LunchApp(lunch_master)
-    #self.slave_state_changed_signal = sig.Signal()
+    app = LunchApp(lunch_main)
+    #self.subordinate_state_changed_signal = sig.Signal()
     return app
 

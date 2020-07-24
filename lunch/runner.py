@@ -20,7 +20,7 @@
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Main entry point of the lunch master application.
+Main entry point of the lunch main application.
 """
 import os
 import sys
@@ -28,7 +28,7 @@ import traceback
 from optparse import OptionParser
 from lunch import __version__
 
-DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch master launches lunch-slave processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
+DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch main launches lunch-subordinate processes through an encrypted SSH session if on a remote host. Those subordinate processes can in turn launch the desired commands on-demand."
 
 def run():
     """
@@ -36,12 +36,12 @@ def run():
     """
     parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-f", "--config-file", type="string", help="Specifies the python config file. You can also simply specify the config file as the first argument.")
-    parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/tmp/lunch")
-    parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
+    parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the main. Default is /var/tmp/lunch")
+    parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging main infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
     parser.add_option("-d", "--debug", action="store_true", help="Makes the logging output very verbose.")
-    parser.add_option("-k", "--kill", action="store_true", help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
+    parser.add_option("-k", "--kill", action="store_true", help="Kills another lunch main that uses the same config file and logging directory. Exits once it's done.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -71,12 +71,12 @@ def run():
             print("Could not load the GTK+ graphical user interface. " + str(e))
             GUI_ENABLED = False
     else:
-        # print("Using lunch master without the GUI.")
+        # print("Using lunch main without the GUI.")
         GUI_ENABLED = False
     from twisted.internet import reactor
     from twisted.internet import defer
     # --------- load the module and run
-    from lunch import master
+    from lunch import main
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s" % (config_file)
@@ -91,18 +91,18 @@ def run():
                 #TODO: show a dialog to the user if --graphical is given.
                 if reactor.running:
                     reactor.stop()
-            master.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
-            identifier = master.gen_id_from_config_file_name(config_file)
-            master.log.info("Will check if lunch master %s is running and kill it if so." % (identifier))
-            deferred = master.kill_master_if_running(identifier=identifier, directory=logging_dir)
+            main.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
+            identifier = main.gen_id_from_config_file_name(config_file)
+            main.log.info("Will check if lunch main %s is running and kill it if so." % (identifier))
+            deferred = main.kill_main_if_running(identifier=identifier, directory=logging_dir)
             deferred.addCallback(_killed_cb)
             reactor.run()
             sys.exit(0)
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
-        except master.FileNotFoundError, e:
-            #print("Error starting lunch as master.")
+            lunch_main = main.run_main(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
+        except main.FileNotFoundError, e:
+            #print("Error starting lunch as main.")
             msg = "A configuration file is missing. Try the --help flag. "
             msg += str(e)
             error_message = msg
@@ -130,12 +130,12 @@ def run():
         sys.exit(1)
     if GUI_ENABLED:
         from lunch import gui
-        app = gui.start_gui(lunch_master)
+        app = gui.start_gui(lunch_main)
         #print("Done starting the app.")
     try:
         reactor.run()
     except KeyboardInterrupt:
-        #log.msg("Ctrl-C in Master.", logging.INFO)
-        #lunch_master.quit_master()
+        #log.msg("Ctrl-C in Main.", logging.INFO)
+        #lunch_main.quit_main()
         reactor.stop()
 

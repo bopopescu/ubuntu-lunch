@@ -1,9 +1,9 @@
 """
-Test cases for the lunch-slave process.
+Test cases for the lunch-subordinate process.
 """
 from twisted.trial import unittest
 
-class Test_Slave(unittest.TestCase):
+class Test_Subordinate(unittest.TestCase):
     pass
     def test_ping(self):
         pass
